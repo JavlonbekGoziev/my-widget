@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Widget">
+<meta name="theme-color" content="#0d0f14">
+<title>Widget</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg:      #0d0f14;
+    --card:    #161a22;
+    --card2:   #1c2130;
+    --accent:  #7ee8a2;
+    --accent2: #56cfe1;
+    --dim:     rgba(255,255,255,0.28);
+    --text:    #f0f4ff;
+    --mono:    'Space Mono', monospace;
+    --serif:   'DM Serif Display', serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; overscroll-behavior:none; }
+
+  body {
+    background: var(--bg);
+    font-family: var(--mono);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: max(env(safe-area-inset-top),24px) 16px max(env(safe-area-inset-bottom),32px);
+    gap: 16px;
+    overflow-y: auto;
+    min-height: 100dvh;
+  }
+
+  /* ── GREETING CARD ── */
+  .greeting-card {
+    width:100%; max-width:420px;
+    background: var(--card);
+    border-radius: 24px;
+    padding: 26px 22px 20px;
+    border: 1px solid rgba(255,255,255,0.07);
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.5s ease both;
+  }
+  .greeting-card::before {
+    content:'';
+    position:absolute; top:-60px; right:-60px;
+    width:180px; height:180px;
+    background: radial-gradient(circle, rgba(86,207,225,0.15) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .greeting-label {
+    font-size:10px; letter-spacing:0.18em;
+    color:var(--accent2); text-transform:uppercase; margin-bottom:5px;
+  }
+  .greeting-text {
+    font-family:var(--serif); font-size:30px;
+    line-height:1.1; margin-bottom:14px;
+  }
+  .date-block { display:flex; align-items:baseline; gap:12px; }
+  .date-day   { font-size:52px; font-weight:700; color:var(--accent); line-height:1; }
+  .date-right { display:flex; flex-direction:column; gap:3px; }
+  .date-weekday { font-size:11px; color:var(--dim); letter-spacing:0.1em; text-transform:uppercase; }
+  .date-month   { font-size:15px; }
+  .divider { margin-top:16px; border:none; border-top:1px solid rgba(255,255,255,0.07); }
+  .note    { margin-top:12px; font-size:12px; color:var(--dim); font-style:italic; line-height:1.6; }
+
+  /* ── COUNTDOWN CARD ── */
+  .countdown-card {
+    width:100%; max-width:420px;
+    background: var(--card2);
+    border-radius: 24px;
+    padding: 22px 20px 20px;
+    border: 1px solid rgba(255,255,255,0.07);
+    position: relative; overflow:hidden;
+    animation: fadeUp 0.5s 0.1s ease both;
+  }
+  .countdown-card::after {
+    content:'';
+    position:absolute; bottom:-50px; left:-40px;
+    width:160px; height:160px;
+    background: radial-gradient(circle, rgba(126,232,162,0.12) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .cd-header {
+    display:flex; justify-content:space-between;
+    align-items:flex-start; margin-bottom:16px;
+  }
+  .cd-event-name { font-family:var(--serif); font-size:22px; line-height:1.2; max-width:60%; }
+  .cd-days-left  { text-align:right; }
+  .cd-days-number{ font-size:32px; font-weight:700; color:var(--accent); line-height:1; }
+  .cd-days-label { font-size:9px; color:var(--dim); letter-spacing:0.12em; text-transform:uppercase; }
+
+  .dots-grid { display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+  .dots-row  { display:flex; gap:4px; }
+  .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .dot.filled { background:var(--accent); box-shadow:0 0 3px rgba(126,232,162,0.45); }
+  .dot.empty  { background:rgba(255,255,255,0.15); }
+
+  .progress-wrap {
+    height:3px; background:rgba(255,255,255,0.08);
+    border-radius:99px; overflow:hidden; margin-bottom:8px;
+  }
+  .progress-fill {
+    height:100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius:99px; transition: width 0.8s ease;
+  }
+  .cd-dates { display:flex; justify-content:space-between; font-size:10px; color:var(--dim); }
+
+  /* ── CONFIG CARD ── */
+  .config-card {
+    width:100%; max-width:420px;
+    background: var(--card);
+    border-radius: 24px;
+    padding: 20px;
+    border: 1px solid rgba(255,255,255,0.07);
+    animation: fadeUp 0.5s 0.2s ease both;
+  }
+  .config-title { font-size:10px; letter-spacing:0.16em; color:var(--dim); text-transform:uppercase; margin-bottom:14px; }
+  .config-row   { display:flex; flex-direction:column; gap:5px; margin-bottom:12px; }
+  .config-row label { font-size:10px; color:var(--dim); letter-spacing:0.06em; text-transform:uppercase; }
+  .config-row input {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius:10px; padding:10px 12px;
+    color:var(--text); font-family:var(--mono); font-size:13px;
+    outline:none; width:100%; transition:border-color 0.2s;
+    -webkit-appearance:none;
+  }
+  .config-row input:focus { border-color:var(--accent); }
+  .config-dates { display:flex; gap:10px; }
+  .config-dates .config-row { flex:1; }
+  .apply-btn {
+    width:100%; padding:13px;
+    background: var(--accent); color:#0a1a0e;
+    border:none; border-radius:12px;
+    font-family:var(--mono); font-size:13px; font-weight:700;
+    letter-spacing:0.05em; cursor:pointer; margin-top:4px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .apply-btn:active { opacity:0.8; transform:scale(0.98); }
+
+  /* ── INSTALL BANNER ── */
+  .install-banner {
+    width:100%; max-width:420px;
+    background: rgba(126,232,162,0.08);
+    border: 1px solid rgba(126,232,162,0.22);
+    border-radius:16px; padding:14px 16px;
+    font-size:12px; color:var(--accent); line-height:1.7;
+    animation: fadeUp 0.5s 0.3s ease both;
+    display:none;
+  }
+  .install-banner.show { display:block; }
+  .install-banner strong { display:block; margin-bottom:3px; font-size:13px; }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── GREETING ── -->
+<div class="greeting-card">
+  <div class="greeting-label">Bugun</div>
+  <div class="greeting-text" id="greetingText">Salom!</div>
+  <div class="date-block">
+    <div class="date-day"     id="dateDay">—</div>
+    <div class="date-right">
+      <div class="date-weekday" id="dateWeekday">—</div>
+      <div class="date-month"   id="dateMonth">—</div>
+    </div>
+  </div>
+  <hr class="divider">
+  <div class="note">Keep happy and keep smiling. ✨</div>
+</div>
+
+<!-- ── COUNTDOWN ── -->
+<div class="countdown-card">
+  <div class="cd-header">
+    <div class="cd-event-name"  id="cdName">—</div>
+    <div class="cd-days-left">
+      <div class="cd-days-number" id="cdDaysNum">—</div>
+      <div class="cd-days-label">kun qoldi</div>
+    </div>
+  </div>
+  <div class="dots-grid"  id="dotsGrid"></div>
+  <div class="progress-wrap">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+  <div class="cd-dates">
+    <span id="cdStart">—</span>
+    <span id="cdEnd">—</span>
+  </div>
+</div>
+
+<!-- ── CONFIG ── -->
+<div class="config-card">
+  <div class="config-title">⚙ Sozlamalar</div>
+  <div class="config-row">
+    <label>Tadbir nomi</label>
+    <input type="text" id="cfgName" placeholder="JLPT N1">
+  </div>
+  <div class="config-dates">
+    <div class="config-row">
+      <label>Boshlanish</label>
+      <input type="date" id="cfgStart">
+    </div>
+    <div class="config-row">
+      <label>Tugash</label>
+      <input type="date" id="cfgEnd">
+    </div>
+  </div>
+  <button class="apply-btn" onclick="applyConfig()">Qo'llash ✓</button>
+</div>
+
+<!-- ── IOS INSTALL HINT ── -->
+<div class="install-banner" id="installBanner">
+  <strong>📱 Home Screen'ga qo'shish</strong>
+  Safari → Pastdagi ulashish (share) tugmasi →<br>
+  "Add to Home Screen" → Add
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  SERVICE WORKER — blob URL orqali inline ro'yxatdan o'tkazish
+// ═══════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  const SW = `
+    const CACHE = 'widget-v2';
+    self.addEventListener('install',  () => self.skipWaiting());
+    self.addEventListener('activate', e  => {
+      e.waitUntil(
+        caches.keys().then(keys =>
+          Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+        )
+      );
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', e => {
+      const url = e.request.url;
+      if (url.includes('fonts.googleapis') || url.includes('fonts.gstatic')) return;
+      e.respondWith(
+        caches.open(CACHE).then(cache =>
+          cache.match(e.request).then(cached => {
+            const network = fetch(e.request).then(resp => {
+              if (resp.ok) cache.put(e.request, resp.clone());
+              return resp;
+            }).catch(() => cached);
+            return cached || network;
+          })
+        )
+      );
+    });
+  `;
+  const blob  = new Blob([SW], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+
+// ═══════════════════════════════════════════════
+//  MANIFEST — <link> elementini dinamik qo'shish
+// ═══════════════════════════════════════════════
+const MANIFEST = {
+  name: 'Mening Widgetim',
+  short_name: 'Widget',
+  start_url: './',
+  display: 'standalone',
+  background_color: '#0d0f14',
+  theme_color: '#0d0f14',
+  orientation: 'portrait',
+  icons: [{
+    src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjgwIiBmaWxsPSIjMGQwZjE0Ii8+PGNpcmNsZSBjeD0iMjU2IiBjeT0iMjIwIiByPSI4MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjN2VlOGEyIiBzdHJva2Utd2lkdGg9IjI0Ii8+PHRleHQgeD0iMjU2IiB5PSIyNDIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZvbnQtc2l6ZT0iNzAiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjN2VlOGEyIj5XPC90ZXh0PjwvcmVjdD48L3N2Zz4=',
+    sizes: 'any',
+    type: 'image/svg+xml',
+    purpose: 'any maskable'
+  }]
+};
+
+const manifestBlob = new Blob([JSON.stringify(MANIFEST)], { type: 'application/json' });
+const manifestUrl  = URL.createObjectURL(manifestBlob);
+const manifestLink = document.createElement('link');
+manifestLink.rel   = 'manifest';
+manifestLink.href  = manifestUrl;
+document.head.appendChild(manifestLink);
+
+// ═══════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════
+const UZ_DAYS   = ['Yakshanba','Dushanba','Seshanba','Chorshanba','Payshanba','Juma','Shanba'];
+const UZ_MONTHS = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+const MS_PER_DAY = 86_400_000;
+const DOTS_COLS  = 30;
+const DOTS_MAX   = 300;
+const DEFAULT    = { name: 'JLPT N1', start: '2024-09-26', end: '2025-07-15' };
+
+// ═══════════════════════════════════════════════
+//  STORAGE
+// ═══════════════════════════════════════════════
+function loadCfg() {
+  try {
+    const s = localStorage.getItem('widget-cfg');
+    if (s) return { ...DEFAULT, ...JSON.parse(s) };
+  } catch(e) {}
+  return { ...DEFAULT };
+}
+
+function saveCfg(cfg) {
+  try { localStorage.setItem('widget-cfg', JSON.stringify(cfg)); } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════
+//  GREETING
+// ═══════════════════════════════════════════════
+function updateGreeting() {
+  const now = new Date();
+  const h   = now.getHours();
+  const greet =
+    h <  4 ? 'Yaxshi tun!'   :
+    h < 12 ? 'Xayrli tong!'  :
+    h < 17 ? 'Xayrli kun!'   :
+    h < 20 ? 'Xayrli kech!'  : 'Yaxshi tun!';
+
+  document.getElementById('greetingText').textContent = greet;
+  document.getElementById('dateDay').textContent      = now.getDate();
+  document.getElementById('dateWeekday').textContent  = UZ_DAYS[now.getDay()];
+  document.getElementById('dateMonth').textContent    =
+    UZ_MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+}
+
+// ═══════════════════════════════════════════════
+//  COUNTDOWN
+// ═══════════════════════════════════════════════
+function fmt(d) {
+  return d.getDate() + ' ' + UZ_MONTHS[d.getMonth()].slice(0,3) + ' ' + d.getFullYear();
+}
+
+function buildDots(total, filled) {
+  const grid = document.getElementById('dotsGrid');
+  grid.innerHTML = '';
+  const cap = Math.min(total, DOTS_MAX);
+  let day = 0;
+  while (day < cap) {
+    const row = document.createElement('div');
+    row.className = 'dots-row';
+    for (let c = 0; c < DOTS_COLS && day < cap; c++, day++) {
+      const dot = document.createElement('div');
+      dot.className = 'dot ' + (day < filled ? 'filled' : 'empty');
+      row.appendChild(dot);
+    }
+    grid.appendChild(row);
+  }
+}
+
+function updateCountdown(cfg) {
+  const start  = new Date(cfg.start);
+  const end    = new Date(cfg.end);
+  const now    = new Date();
+  const total  = Math.round((end - start) / MS_PER_DAY) + 1;
+  const passed = Math.max(0, Math.round((now - start) / MS_PER_DAY));
+  const left   = Math.max(0, Math.round((end - now)   / MS_PER_DAY));
+  const pct    = total > 0 ? Math.min(100, (passed / total) * 100) : 0;
+
+  document.getElementById('cdName').textContent        = cfg.name;
+  document.getElementById('cdDaysNum').textContent     = left;
+  document.getElementById('cdStart').textContent       = fmt(start);
+  document.getElementById('cdEnd').textContent         = fmt(end);
+  document.getElementById('progressFill').style.width  = pct + '%';
+  buildDots(total, passed);
+}
+
+// ═══════════════════════════════════════════════
+//  CONFIG APPLY
+// ═══════════════════════════════════════════════
+function applyConfig() {
+  const name  = document.getElementById('cfgName').value.trim() || 'Tadbir';
+  const start = document.getElementById('cfgStart').value;
+  const end   = document.getElementById('cfgEnd').value;
+
+  if (!start || !end || end <= start) {
+    alert('Sanalarni to\'g\'ri kiriting!');
+    return;
+  }
+
+  const cfg = { name, start, end };
+  saveCfg(cfg);
+  updateCountdown(cfg);
+}
+
+// ═══════════════════════════════════════════════
+//  iOS INSTALL HINT
+// ═══════════════════════════════════════════════
+const isIOS        = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = window.navigator.standalone;
+if (isIOS && !isStandalone) {
+  document.getElementById('installBanner').classList.add('show');
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+const cfg = loadCfg();
+document.getElementById('cfgName').value  = cfg.name;
+document.getElementById('cfgStart').value = cfg.start;
+document.getElementById('cfgEnd').value   = cfg.end;
+
+updateGreeting();
+updateCountdown(cfg);
+setInterval(updateGreeting, 60_000);
+</script>
+</body>
+</html>
